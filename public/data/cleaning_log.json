@@ -1,0 +1,660 @@
+{
+ "asof": "2026-12-28",
+ "rules": [
+  {
+   "table": "units",
+   "field": "-",
+   "rule": "units_passthrough",
+   "action": "기준 테이블 — 공백만 제거 후 그대로 사용",
+   "count": 220,
+   "note": "다른 표의 unit_id 유효성 검증 기준으로 사용",
+   "severity": "normal",
+   "samples": []
+  },
+  {
+   "table": "customers",
+   "field": "customer_id",
+   "rule": "dup_id",
+   "action": "동일 customer_id 중복행 → 완전성 점수 높은 1건만 채택",
+   "count": 48,
+   "note": "전화 포맷·공백만 다른 완전 중복. 648행 → 600행",
+   "severity": "high",
+   "samples": [
+    {
+     "before": "C00427 / 010-7260-8814",
+     "after": "완전성 높은 1건만 채택"
+    },
+    {
+     "before": "C00081 / 010-5743-2887",
+     "after": "완전성 높은 1건만 채택"
+    },
+    {
+     "before": "C00489 / 010.8293.3022",
+     "after": "완전성 높은 1건만 채택"
+    },
+    {
+     "before": "C00406 / 010.6832.1798",
+     "after": "완전성 높은 1건만 채택"
+    }
+   ]
+  },
+  {
+   "table": "customers",
+   "field": "name/phone",
+   "rule": "cross_dup",
+   "action": "이름+전화 동일 · ID 다른 건 → 동일인 후보로 태깅",
+   "count": 0,
+   "note": "삭제하지 않고 dup_person_of로 연결 (오삭제 방지)",
+   "severity": "high",
+   "samples": []
+  },
+  {
+   "table": "customers",
+   "field": "grade",
+   "rule": "grade_norm",
+   "action": "등급 표기 통일 (vip/Vip/VIP, 앞뒤 공백)",
+   "count": 178,
+   "note": "VVIP·VIP·일반·신규·관심고객 5단계로 수렴",
+   "severity": "normal",
+   "samples": [
+    {
+     "before": "'vip'",
+     "after": "VIP"
+    },
+    {
+     "before": "' 일반'",
+     "after": "일반"
+    },
+    {
+     "before": "'일반 '",
+     "after": "일반"
+    },
+    {
+     "before": "'vip'",
+     "after": "VIP"
+    }
+   ]
+  },
+  {
+   "table": "customers",
+   "field": "region",
+   "rule": "region_norm",
+   "action": "지역 표기 통일 (부산시/Busan→부산 등)",
+   "count": 37,
+   "note": "24종 → 17개 시도로 수렴",
+   "severity": "normal",
+   "samples": [
+    {
+     "before": "경기도",
+     "after": "경기"
+    },
+    {
+     "before": "Gyeonggi",
+     "after": "경기"
+    },
+    {
+     "before": "부산시",
+     "after": "부산"
+    },
+    {
+     "before": "경기도",
+     "after": "경기"
+    }
+   ]
+  },
+  {
+   "table": "customers",
+   "field": "lead_source",
+   "rule": "source_map",
+   "action": "유입경로 → 광고비 테이블 채널명으로 매핑",
+   "count": 515,
+   "note": "'광고'는 매체 미표기 → 옥외광고로 추정 매핑(conf=추정), ROI 해석 시 주의",
+   "severity": "high",
+   "samples": [
+    {
+     "before": "온라인전시관",
+     "after": "전시관행사 (확정)"
+    },
+    {
+     "before": "광고",
+     "after": "옥외광고 (추정)"
+    },
+    {
+     "before": "온라인전시관",
+     "after": "전시관행사 (확정)"
+    },
+    {
+     "before": "방문",
+     "after": "직접유입 (확정)"
+    }
+   ]
+  },
+  {
+   "table": "customers",
+   "field": "phone",
+   "rule": "phone_norm",
+   "action": "전화번호 010-XXXX-XXXX 형식으로 통일",
+   "count": 298,
+   "note": "01012345678 / 010.1234.5678 3종 포맷 혼재",
+   "severity": "normal",
+   "samples": [
+    {
+     "before": "01023922791",
+     "after": "010-2392-2791"
+    },
+    {
+     "before": "010.7997.4436",
+     "after": "010-7997-4436"
+    },
+    {
+     "before": "01096016020",
+     "after": "010-9601-6020"
+    },
+    {
+     "before": "010.9166.8324",
+     "after": "010-9166-8324"
+    }
+   ]
+  },
+  {
+   "table": "customers",
+   "field": "phone",
+   "rule": "phone_missing",
+   "action": "전화번호 결측 → NULL 유지",
+   "count": 36,
+   "note": "임의 값 대체 금지. 연락 불가 고객으로 별도 집계",
+   "severity": "normal",
+   "samples": []
+  },
+  {
+   "table": "customers",
+   "field": "email",
+   "rule": "email_flag",
+   "action": "한글 로컬파트 이메일 → email_valid=false 플래그",
+   "count": 180,
+   "note": "값은 보존하되 발송 대상에서 제외 (삭제 시 원인 추적 불가)",
+   "severity": "high",
+   "samples": [
+    {
+     "before": "오유진@example.com",
+     "after": "→ email_valid=false (비ASCII 로컬파트)"
+    },
+    {
+     "before": "정예준@example.com",
+     "after": "→ email_valid=false (비ASCII 로컬파트)"
+    },
+    {
+     "before": "강동현@example.com",
+     "after": "→ email_valid=false (비ASCII 로컬파트)"
+    },
+    {
+     "before": "한승우@example.com",
+     "after": "→ email_valid=false (비ASCII 로컬파트)"
+    }
+   ]
+  },
+  {
+   "table": "customers",
+   "field": "email",
+   "rule": "email_missing",
+   "action": "이메일 결측 → NULL 유지",
+   "count": 38,
+   "note": "",
+   "severity": "normal",
+   "samples": []
+  },
+  {
+   "table": "customers",
+   "field": "budget_10k_krw",
+   "rule": "budget_sentinel",
+   "action": "예산 -1 / 999999 → NULL (미상 sentinel)",
+   "count": 129,
+   "note": "평균 예산 계산에서 제외. 미기재 129건은 예산 적합도 판정 불가로 처리",
+   "severity": "high",
+   "samples": [
+    {
+     "before": "-1",
+     "after": "NULL (미상값 sentinel)"
+    },
+    {
+     "before": "999999",
+     "after": "NULL (미상값 sentinel)"
+    },
+    {
+     "before": "-1",
+     "after": "NULL (미상값 sentinel)"
+    },
+    {
+     "before": "999999",
+     "after": "NULL (미상값 sentinel)"
+    }
+   ]
+  },
+  {
+   "table": "customers",
+   "field": "signup_date",
+   "rule": "date_signup",
+   "action": "가입일 4종 포맷 → ISO(YYYY-MM-DD) 통일",
+   "count": 172,
+   "note": "",
+   "severity": "normal",
+   "samples": [
+    {
+     "before": "10-16-2024 [미국식(MM-DD-YYYY)]",
+     "after": "2024-10-16"
+    },
+    {
+     "before": "20240301 [구분자없음(YYYYMMDD)]",
+     "after": "2024-03-01"
+    },
+    {
+     "before": "2024/07/23 [슬래시(YYYY/MM/DD)]",
+     "after": "2024-07-23"
+    },
+    {
+     "before": "04-15-2025 [미국식(MM-DD-YYYY)]",
+     "after": "2025-04-15"
+    }
+   ]
+  },
+  {
+   "table": "consultations",
+   "field": "consult_date",
+   "rule": "cons_date",
+   "action": "날짜 4종 포맷 → ISO 통일",
+   "count": 637,
+   "note": "ISO(YYYY-MM-DD) 1863건 · 미국식(MM-DD-YYYY) 214건 · 슬래시(YYYY/MM/DD) 212건 · 구분자없음(YYYYMMDD) 211건",
+   "severity": "high",
+   "samples": [
+    {
+     "before": "20260206 [구분자없음(YYYYMMDD)]",
+     "after": "2026-02-06"
+    },
+    {
+     "before": "20251224 [구분자없음(YYYYMMDD)]",
+     "after": "2025-12-24"
+    },
+    {
+     "before": "2025/09/18 [슬래시(YYYY/MM/DD)]",
+     "after": "2025-09-18"
+    },
+    {
+     "before": "2024/02/26 [슬래시(YYYY/MM/DD)]",
+     "after": "2024-02-26"
+    }
+   ]
+  },
+  {
+   "table": "consultations",
+   "field": "channel",
+   "rule": "cons_channel",
+   "action": "채널 표기 통일 (phone/Phone/전화 · 방문상담/방문)",
+   "count": 1288,
+   "note": "8종 → 4종(전화·방문·SNS·온라인)",
+   "severity": "normal",
+   "samples": [
+    {
+     "before": "'phone'",
+     "after": "전화"
+    },
+    {
+     "before": "'방문상담'",
+     "after": "방문"
+    },
+    {
+     "before": "'방문상담'",
+     "after": "방문"
+    },
+    {
+     "before": "'phone'",
+     "after": "전화"
+    }
+   ]
+  },
+  {
+   "table": "consultations",
+   "field": "outcome",
+   "rule": "cons_outcome",
+   "action": "상담결과 앞뒤 공백 제거",
+   "count": 501,
+   "note": "'계약희망 '과 '계약희망'이 다른 값으로 집계되던 문제",
+   "severity": "normal",
+   "samples": [
+    {
+     "before": "'계약희망 '",
+     "after": "계약희망"
+    },
+    {
+     "before": "'계약희망 '",
+     "after": "계약희망"
+    },
+    {
+     "before": "'계약희망 '",
+     "after": "계약희망"
+    },
+    {
+     "before": "'계약희망 '",
+     "after": "계약희망"
+    }
+   ]
+  },
+  {
+   "table": "consultations",
+   "field": "duration_min",
+   "rule": "dur_nonpos",
+   "action": "상담시간 0분 이하 → NULL",
+   "count": 493,
+   "note": "음수(-5)는 물리적으로 불가 → 측정오류로 판정",
+   "severity": "high",
+   "samples": [
+    {
+     "before": "-5",
+     "after": "NULL (측정오류)"
+    },
+    {
+     "before": "0",
+     "after": "NULL (측정오류)"
+    },
+    {
+     "before": "-5",
+     "after": "NULL (측정오류)"
+    },
+    {
+     "before": "0",
+     "after": "NULL (측정오류)"
+    }
+   ]
+  },
+  {
+   "table": "consultations",
+   "field": "duration_min",
+   "rule": "dur_high",
+   "action": "상담시간 120분 초과 → 값 보존 + 이상치 플래그",
+   "count": 225,
+   "note": "삭제하지 않음. 평균 산출 시에만 120분으로 winsorize",
+   "severity": "normal",
+   "samples": [
+    {
+     "before": "240",
+     "after": "값 보존 + outlier 플래그, 평균 산출 시 120분으로 winsorize"
+    },
+    {
+     "before": "240",
+     "after": "값 보존 + outlier 플래그, 평균 산출 시 120분으로 winsorize"
+    },
+    {
+     "before": "240",
+     "after": "값 보존 + outlier 플래그, 평균 산출 시 120분으로 winsorize"
+    },
+    {
+     "before": "240",
+     "after": "값 보존 + outlier 플래그, 평균 산출 시 120분으로 winsorize"
+    }
+   ]
+  },
+  {
+   "table": "consultations",
+   "field": "customer_id",
+   "rule": "orphan_cust",
+   "action": "고객 마스터에 없는 customer_id → NULL 처리 후 격리",
+   "count": 74,
+   "note": "행을 지우지 않음 — '추적 불가 리드'로 누수 금액 산정에 사용",
+   "severity": "high",
+   "samples": [
+    {
+     "before": "CS00074 → C99901",
+     "after": "고객 마스터에 없음 → 추적 불가 리드로 격리"
+    },
+    {
+     "before": "CS00092 → C99721",
+     "after": "고객 마스터에 없음 → 추적 불가 리드로 격리"
+    },
+    {
+     "before": "CS00103 → C99230",
+     "after": "고객 마스터에 없음 → 추적 불가 리드로 격리"
+    },
+    {
+     "before": "CS00114 → C99026",
+     "after": "고객 마스터에 없음 → 추적 불가 리드로 격리"
+    }
+   ]
+  },
+  {
+   "table": "consultations",
+   "field": "unit_id",
+   "rule": "orphan_unit",
+   "action": "매물 마스터에 없는 unit_id → NULL 처리 후 격리",
+   "count": 83,
+   "note": "매물별 집계에서만 제외, 상담 건수에는 포함",
+   "severity": "high",
+   "samples": [
+    {
+     "before": "CS00007 → U9966",
+     "after": "매물 마스터에 없음 → 매물 집계에서 제외"
+    },
+    {
+     "before": "CS00038 → U9918",
+     "after": "매물 마스터에 없음 → 매물 집계에서 제외"
+    },
+    {
+     "before": "CS00114 → U9960",
+     "after": "매물 마스터에 없음 → 매물 집계에서 제외"
+    },
+    {
+     "before": "CS00115 → U9928",
+     "after": "매물 마스터에 없음 → 매물 집계에서 제외"
+    }
+   ]
+  },
+  {
+   "table": "contracts",
+   "field": "status",
+   "rule": "ctr_status",
+   "action": "계약상태 표기 통일 (완료/complete/Completed)",
+   "count": 133,
+   "note": "6종 → 3종(완료·진행중·해지)",
+   "severity": "high",
+   "samples": [
+    {
+     "before": "'Completed'",
+     "after": "완료"
+    },
+    {
+     "before": "'Completed'",
+     "after": "완료"
+    },
+    {
+     "before": "'complete'",
+     "after": "완료"
+    },
+    {
+     "before": "'Completed'",
+     "after": "완료"
+    }
+   ]
+  },
+  {
+   "table": "contracts",
+   "field": "contract_date",
+   "rule": "ctr_date",
+   "action": "계약일 4종 포맷 → ISO 통일",
+   "count": 96,
+   "note": "ISO(YYYY-MM-DD) 254건 · 구분자없음(YYYYMMDD) 42건 · 미국식(MM-DD-YYYY) 28건 · 슬래시(YYYY/MM/DD) 26건",
+   "severity": "normal",
+   "samples": [
+    {
+     "before": "12-14-2026 [미국식(MM-DD-YYYY)]",
+     "after": "2026-12-14"
+    },
+    {
+     "before": "20250421 [구분자없음(YYYYMMDD)]",
+     "after": "2025-04-21"
+    },
+    {
+     "before": "20250218 [구분자없음(YYYYMMDD)]",
+     "after": "2025-02-18"
+    },
+    {
+     "before": "20241226 [구분자없음(YYYYMMDD)]",
+     "after": "2024-12-26"
+    }
+   ]
+  },
+  {
+   "table": "contracts",
+   "field": "price_10k_krw",
+   "rule": "ctr_price0",
+   "action": "분양가 0원 → 동일 타입 실계약가 중앙값으로 대체",
+   "count": 4,
+   "note": "0원 계약은 존재할 수 없음. 마스터 표시가는 스케일이 달라 사용 불가(§5.5) → 대체 사실을 price_flag에 기록",
+   "severity": "high",
+   "samples": [
+    {
+     "before": "K00048 분양가 0",
+     "after": "동일 타입 실계약가 중앙값으로 대체 (§5.5)"
+    },
+    {
+     "before": "K00092 분양가 0",
+     "after": "동일 타입 실계약가 중앙값으로 대체 (§5.5)"
+    },
+    {
+     "before": "K00136 분양가 0",
+     "after": "동일 타입 실계약가 중앙값으로 대체 (§5.5)"
+    },
+    {
+     "before": "K00203 분양가 0",
+     "after": "동일 타입 실계약가 중앙값으로 대체 (§5.5)"
+    }
+   ]
+  },
+  {
+   "table": "contracts",
+   "field": "loan_amount_10k_krw",
+   "rule": "loan_missing",
+   "action": "대출금액 결측 → NULL 유지",
+   "count": 41,
+   "note": "0원으로 채우면 '현금 완납'과 구분 불가 → 평균 대출액에서 제외",
+   "severity": "high",
+   "samples": [
+    {
+     "before": "K00003 대출금 공란",
+     "after": "NULL 유지 (0원 대체 금지)"
+    },
+    {
+     "before": "K00019 대출금 공란",
+     "after": "NULL 유지 (0원 대체 금지)"
+    },
+    {
+     "before": "K00036 대출금 공란",
+     "after": "NULL 유지 (0원 대체 금지)"
+    },
+    {
+     "before": "K00039 대출금 공란",
+     "after": "NULL 유지 (0원 대체 금지)"
+    }
+   ]
+  },
+  {
+   "table": "contracts",
+   "field": "unit_id",
+   "rule": "unit_conflict",
+   "action": "동일 매물에 유효계약 2건 이상 → 충돌 플래그",
+   "count": 103,
+   "note": "해지 후 재계약이 아닌 진짜 충돌만 카운트",
+   "severity": "high",
+   "samples": [
+    {
+     "before": "U0121: K00001(완료), K00229(완료)",
+     "after": "동일 매물 유효계약 2건 이상 → 검증 대상"
+    },
+    {
+     "before": "U0057: K00003(완료), K00346(진행중)",
+     "after": "동일 매물 유효계약 2건 이상 → 검증 대상"
+    },
+    {
+     "before": "U0149: K00004(완료), K00249(완료)",
+     "after": "동일 매물 유효계약 2건 이상 → 검증 대상"
+    },
+    {
+     "before": "U0165: K00005(완료), K00290(완료)",
+     "after": "동일 매물 유효계약 2건 이상 → 검증 대상"
+    }
+   ]
+  },
+  {
+   "table": "ad_spend",
+   "field": "-",
+   "rule": "ad_passthrough",
+   "action": "정돈된 상태 — 타입 변환만 수행",
+   "count": 144,
+   "note": "2024-01 ~ 2025-12 (24개월 × 6채널)",
+   "severity": "normal",
+   "samples": []
+  },
+  {
+   "table": "cross",
+   "field": "기간",
+   "rule": "period_gap",
+   "action": "광고비 기간(~2025-12)과 상담 기간(~2026-12) 불일치 → ROI는 겹치는 구간만 산출",
+   "count": 1,
+   "note": "2026년 상담·계약은 채널 ROI 계산에서 제외해야 왜곡이 없음",
+   "severity": "high",
+   "samples": []
+  },
+  {
+   "table": "cross",
+   "field": "units.price ↔ contracts.price",
+   "rule": "price_scale",
+   "action": "두 표의 가격 스케일 불일치 확인 → 매출은 실계약가만 사용, 재고는 타입별 실계약가로 캘리브레이션",
+   "count": 220,
+   "note": "상관계수 -0.059 (사실상 무관). 마스터 표시가는 평당 9,298만원(비현실적), 실계약가는 평당 986만원. 두 값을 합산하면 매출이 9.4배 부풀려짐",
+   "severity": "high",
+   "samples": []
+  },
+  {
+   "table": "cross",
+   "field": "ad_spend.leads ↔ customers",
+   "rule": "lead_gap",
+   "action": "광고 리드 137,068건 대비 등록 고객 600명(0.44%) — 리드→고객 전환 구간의 기록이 누락됨",
+   "count": 137068,
+   "note": "광고 테이블의 leads는 클릭·문의 등 원시 반응 수치로 보이며, 고객 마스터와 1:1 대응하지 않는다. 퍼널은 '고객 등록' 이후만 신뢰 구간으로 사용하고 광고 리드는 참고값으로 분리 표기",
+   "severity": "high",
+   "samples": []
+  }
+ ],
+ "quality": {
+  "raw_rows": 3862,
+  "clean_rows": 3814,
+  "cells": 35842,
+  "issues": 142598,
+  "issue_rate": 397.85,
+  "before": {
+   "고객 등급 표기": 9,
+   "지역 표기": 24,
+   "상담 채널 표기": 8,
+   "계약 상태 표기": 6,
+   "날짜 포맷": 4,
+   "전화 포맷": 3
+  },
+  "after": {
+   "고객 등급 표기": 5,
+   "지역 표기": 17,
+   "상담 채널 표기": 4,
+   "계약 상태 표기": 3,
+   "날짜 포맷": 1,
+   "전화 포맷": 1
+  },
+  "integrity": {
+   "고객 ID 중복": 48,
+   "동일인 의심": 0,
+   "고아 상담(고객)": 74,
+   "고아 상담(매물)": 83,
+   "예산 sentinel": 129,
+   "대출금 결측": 41,
+   "분양가 0원": 4,
+   "상담시간 이상": 718,
+   "이메일 무효": 218,
+   "전화 결측": 36
+  }
+ }
+}
